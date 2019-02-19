@@ -1,0 +1,14 @@
+#!/bin/bash
+
+PKG_NAME="rfid-access-control"
+BIN_DIR="./bin"
+
+# 如果你想在Windows 32位系统下运行
+CGO_ENABLED=0 GOOS=windows GOARCH=386 go build -o "$BIN_DIR/$PKG_NAME.x86.exe"
+# 如果你想在Windows 64位系统下运行
+CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o "$BIN_DIR/$PKG_NAME.x64.exe"
+
+# 如果你想在Linux 32位系统下运行
+CGO_ENABLED=0 GOOS=linux GOARCH=386 go build -o "$BIN_DIR/$PKG_NAME.x86"
+# 如果你想在Linux 64位系统下运行
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o "$BIN_DIR/$PKG_NAME.x64"
