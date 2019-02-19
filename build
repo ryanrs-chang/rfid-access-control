@@ -1,14 +1,25 @@
 #!/bin/bash
-
+MAIN="./main.go"
 PKG_NAME="rfid-access-control"
 BIN_DIR="./bin"
 
+echo $MAIN
 # 如果你想在Windows 32位系统下运行
-CGO_ENABLED=0 GOOS=windows GOARCH=386 go build -o "$BIN_DIR/$PKG_NAME.x86.exe"
+echo 'building.. windows x86'
+CGO_ENABLED=0 GOOS=windows GOARCH=386 go build  -o "$BIN_DIR/$PKG_NAME.x86.exe" "$MAIN"
 # 如果你想在Windows 64位系统下运行
-CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o "$BIN_DIR/$PKG_NAME.x64.exe"
+echo 'building.. windows x64'
+CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o "$BIN_DIR/$PKG_NAME.x64.exe" "$MAIN"
 
 # 如果你想在Linux 32位系统下运行
-CGO_ENABLED=0 GOOS=linux GOARCH=386 go build -o "$BIN_DIR/$PKG_NAME.x86"
+echo 'building.. linux x86'
+CGO_ENABLED=0 GOOS=linux GOARCH=386 go build -o "$BIN_DIR/$PKG_NAME.x86" "$MAIN"
 # 如果你想在Linux 64位系统下运行
-CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o "$BIN_DIR/$PKG_NAME.x64"
+echo 'building.. linux x64'
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o "$BIN_DIR/$PKG_NAME.x64" "$MAIN"
+
+# for macos
+echo 'building.. darwin x86'
+CGO_ENABLED=0 GOOS=darwin GOARCH=386 go build -o "$BIN_DIR/$PKG_NAME.x86.mac" "$MAIN"
+echo 'building.. darwin x64'
+CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o "$BIN_DIR/$PKG_NAME.x64.mac" "$MAIN"
