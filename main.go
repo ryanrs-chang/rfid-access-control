@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"fmt"
 	"log"
 	"os"
@@ -11,7 +12,7 @@ import (
 	"github.com/jacobsa/go-serial/serial"
 )
 
-type config struct {
+type Config struct {
 	// for rfid reader
 	Port     string `env:"PORT" envDefault:"/dev/ttyACM0"`
 	BaudRate uint   `env:"BaudRate" envDefault:"9600"`
@@ -21,16 +22,38 @@ type config struct {
 	Host     string `env:"Host" envDefault:"tcp://iot.eclipse.org:1883"`
 	ClientID string `env:"ClientID" envDefault:"client"`
 	Topic    string `env:"Topic" envDefault:"pool/abc/rfid"`
+	CertFile string `env:"CertFile"`
+	KeyFile  string `env:"KeyFile"`
+	Username string `env:"Username"`
+	Password string `env:"Password"`
 	// logger
 	LogFile string `env:"logFile" envDefault:"reader.log"`
 }
 
+func getInsecureCert(cfg Config) *tls.Config {
+	if cfg.CertFile == "" && cfg.KeyFile == "" {
+		return nil
+	}
+
+	cer, err := tls.LoadX509KeyPair(cfg.CertFile, cfg.KeyFile)
+	if err != nil {
+		log.Println(err)
+		os.Exit(1)
+	}
+
+	conf := &tls.Config{
+		InsecureSkipVerify: true,
+		Certificates:       []tls.Certificate{cer},
+	}
+
+	return conf
+}
+
 func main() {
-	cfg := config{}
+	cfg := Config{}
 	if err := env.Parse(&cfg); err != nil {
 		fmt.Printf("%+v\n", err)
 	}
-
 	fmt.Printf("%+v\n", cfg)
 
 	options := serial.OpenOptions{
@@ -49,7 +72,15 @@ func main() {
 	defer device.Close()
 
 	// for mqtt client
-	client := mqtt.NewClient(cfg.Host, cfg.ClientID)
+	tlsCfg := getInsecureCert(cfg)
+
+	clientCfg := &mqtt.Config{
+		Host:     cfg.Host,
+		ClientID: cfg.ClientID,
+		Username: cfg.Username,
+		Password: cfg.Password,
+	}
+	client := mqtt.NewClient(clientCfg, tlsCfg)
 	if token := client.Subscribe(cfg.Topic, 0, nil); token.Wait() && token.Error() != nil {
 		fmt.Println(token.Error())
 		os.Exit(1)
@@ -61,7 +92,7 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	infoLog := log.New(file, "[ID]", log.LstdFlags)
+	infoLog := log.New(file, "[ID] ", log.LstdFlags)
 
 	device.Listen(func(country int, id int) {
 		log.Printf("Country:%d, ID:%d", country, id)

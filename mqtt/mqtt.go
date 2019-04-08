@@ -1,22 +1,42 @@
 package mqtt
 
 import (
+	"crypto/tls"
 	"log"
 
-	MQTT "github.com/eclipse/paho.mqtt.golang"
+	mqtt "github.com/eclipse/paho.mqtt.golang"
+	uuid "github.com/satori/go.uuid"
 )
 
-var f MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
+type Config struct {
+	Host     string
+	ClientID string
+	Username string
+	Password string
+}
+
+var f mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Message) {
 	log.Printf("TOPIC: %s MSG:%s\n", msg.Topic(), msg.Payload())
 }
 
-func NewClient(host string, clinetID string) MQTT.Client {
-	opts := MQTT.NewClientOptions().AddBroker(host)
+func NewClient(cfg *Config, tlsCfg *tls.Config) mqtt.Client {
+	clinetID := cfg.ClientID
+	if clinetID == "" {
+		clinetID = uuid.NewV4().String()
+	}
 
-	opts.SetClientID(clinetID)
-	opts.SetDefaultPublishHandler(f)
+	opts := mqtt.NewClientOptions().
+		AddBroker(cfg.Host).
+		SetDefaultPublishHandler(f).
+		SetClientID(clinetID).
+		SetUsername(cfg.Username).
+		SetPassword(cfg.Password)
 
-	c := MQTT.NewClient(opts)
+	if tlsCfg != nil {
+		opts.SetTLSConfig(tlsCfg)
+	}
+
+	c := mqtt.NewClient(opts)
 	if token := c.Connect(); token.Wait() && token.Error() != nil {
 		panic(token.Error())
 	}
