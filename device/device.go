@@ -71,7 +71,12 @@ func (d *Device) Listen(cb func(int, int)) {
 	for {
 		buf, err := d.reader.ReadSlice(0x03)
 		if err != nil {
-			log.Panicf("%v\n", err)
+			errText := fmt.Sprintf("%s", err)
+			if errText == "multiple Read calls return no data or error" {
+				time.Sleep(1000)
+				continue
+			}
+			log.Panicln(err)
 		}
 
 		country, id, err := handleRFID(buf)

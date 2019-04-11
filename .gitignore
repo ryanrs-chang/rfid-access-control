@@ -13,3 +13,4 @@
 /vendor
 *.log
 /certs
+/bin/*
